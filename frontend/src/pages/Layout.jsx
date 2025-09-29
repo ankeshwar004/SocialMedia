@@ -9,11 +9,11 @@ function Layout(){
     const user=dummyUserData;
     const [sidebarOpen,setSidebarOpen]=useState(false);
     return user ? (
-        <div className="w-full h-full flex">
-            <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-            <div className="flex-1 bg-slate-50 min-h-screen">
-              <Outlet />
-            </div>
+                <div className="w-full h-full">
+                        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+                        <div className="bg-slate-50 min-h-screen ">
+                            <Outlet />
+                        </div>
             {
                 sidebarOpen?
                 <X className="absolute top-3 right-3 p-2 z-50 bg-white rounded-md shadow 

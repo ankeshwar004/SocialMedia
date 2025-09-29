@@ -1,8 +1,26 @@
-import { BadgeCheck } from "lucide-react";
-import React from "react";
+import { BadgeCheck, Heart, MessageCircle, Share } from "lucide-react";
+import React ,{useState} from "react";
 import moment from "moment";
+import { dummyUserData } from "../assets/assets";
+import { useNavigate } from "react-router-dom";
 
 function PostCard({ post }) {
+
+    const navigate=useNavigate();
+    const [likes, setLikes] = useState(post.likes_count);
+    const currUser=dummyUserData; 
+    
+    const handleLike=async()=>{
+        // Simulate API call to like/unlike the post
+        if(likes.includes(currUser.id)){
+            // Unlike the post
+            setLikes(likes.filter(id => id !== currUser.id));
+        }else{
+            // Like the post
+            setLikes([...likes, currUser.id]);
+        }
+    }
+
 
     // Build JSX parts so Tailwind classes apply (React escapes raw HTML strings by default)
     const parts = React.useMemo(() => {
@@ -25,7 +43,7 @@ function PostCard({ post }) {
     return (
         <div className="bg-white p-4 rounded-xl shadow-md space-y-4 w-full max-w-2xl">
             {/* User Info */}
-            <div className="inline-flex items-center gap-3 cursor-pointer">
+            <div onClick={() => navigate(`/profile/${post.user._id}`)} className="inline-flex items-center gap-3 cursor-pointer">
                 <img src={post.user.profile_picture} alt="profile" className="size-10 
                 rounded-full object-cover"/>
                 <div>
@@ -57,6 +75,27 @@ function PostCard({ post }) {
                     ))}
                 </div>
             )}
+
+            {/* Actions */}
+            <div className="flex item-center gap-4 text-gray-600 text-sm pt-2 border-t
+              border-gray-300">
+                <div className="flex items-center gap-1">
+                    <Heart className={`h-4 w-4 cursor-pointer
+                         ${likes.includes(currUser.id) && 'text-red-500 fill-red-500'}`} 
+                         onClick={handleLike} />
+                    <span className="text-xs ml-1">{likes.length}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <MessageCircle className="h-4 w-4 cursor-pointer" />
+                    <span className="text-xs ml-1">{8}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Share className="h-4 w-4 cursor-pointer" />
+                    <span className="text-xs ml-1">{1}</span>
+                </div>
+
+            </div>
+
         </div>
     );
 }
