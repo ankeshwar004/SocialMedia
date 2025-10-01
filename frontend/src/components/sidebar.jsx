@@ -17,8 +17,8 @@ function Sidebar({ sidebarOpen, setSidebarOpen }) {
         <div
             className={`w-60 xl:w-72 fixed top-0 left-0 h-screen bg-white border-r border-gray-200
             flex flex-col justify-between items-center z-30
-            max-sm:transition-transform max-sm:duration-300 max-sm:ease-in-out
-            max-sm:${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+            transition-transform duration-300 ease-in-out
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} sm:translate-x-0`}
         >
             {/* Scroll container for menu if content exceeds viewport */}
             <div className="w-full overflow-y-auto scrollbar-thin scrollbar-track-transparent">

@@ -9,9 +9,16 @@ function Layout(){
     const user=dummyUserData;
     const [sidebarOpen,setSidebarOpen]=useState(false);
     return user ? (
-                <div className="w-full h-full">
+                <div className="w-full h-full relative">
                         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-                        <div className="bg-slate-50 min-h-screen ">
+                        {/* Backdrop for small screens when sidebar open */}
+                        {sidebarOpen && (
+                            <div
+                                onClick={() => setSidebarOpen(false)}
+                                className="fixed inset-0 bg-black/40 backdrop-blur-[1px] sm:hidden z-20"
+                            />
+                        )}
+                        <div className="bg-slate-50 min-h-screen sm:ml-60 xl:ml-72 transition-[margin] duration-300">
                             <Outlet />
                         </div>
             {
