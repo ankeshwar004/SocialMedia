@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv/config';
 import cors from 'cors'; 
 import connectDB from './config/db.js';
-import { inngest, functions } from "./src/inngest"
+import { inngest, functions } from "./inngest/index.js"
 import { serve } from "inngest/express";
 
 
