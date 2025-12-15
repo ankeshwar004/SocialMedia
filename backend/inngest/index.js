@@ -1,5 +1,6 @@
 import {Inngest} from "inngest";
 import User from "../Models/User.js";
+import sendEmail from "../config/nodemailer.js";
 
 export const inngest = new Inngest({ id: "Social-Media" });
 
@@ -56,6 +57,28 @@ const DeleteUserData=inngest.createFunction(
     await User.findByIdAndDelete(id);
   }
 );
+
+// Inngest function to send remainder when new connection request is received
+const sendConnectionRequestRemainder=inngest.createFunction(
+   { id: "Send Connection Request Remainder" },
+   {event: "app/connection-request"}
+
+   async ({event,step})=>{
+    const {connectionId}=event.data;
+    await step.run('send-connection-request-email',async()=>{
+      const connection=await Connection.findById(connectionId).populate('from_user_id');
+      const subject='New Connection Request';
+      const html=`<p>You have a new connection request from ${connection.from_user_id.full_name} (@${connection.from_user_id.username}).</p>`;
+      
+      await sendEmail({
+        to:connection.to_user_id.email,
+        subject,
+        html  
+      })
+   })
+  }
+)
+
 
 export const functions = [
     SaveUserData,
