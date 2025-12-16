@@ -1,8 +1,8 @@
 import { format } from "path";
-import  User  from "../Models/User.js";
+import User from "../Models/User.js";
 import imagekit from "../config/imagekit.js";
 import fs, { stat } from "fs";
-import Connection from "../../frontend/src/pages/Connection.jsx";
+import Connection from "../Models/Connection.js";
 
 
 // Get UserData from UserId
