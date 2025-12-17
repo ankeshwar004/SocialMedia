@@ -2,6 +2,7 @@ import { Inngest } from "inngest";
 import User from "../Models/User.js";
 import Connection from "../Models/Connection.js";
 import sendEmail from "../config/nodemailer.js";
+import Story from "../Models/Story.js";
 
 export const inngest = new Inngest({ id: "Social-Media" });
 
@@ -98,10 +99,27 @@ const sendConnectionRequestRemainder = inngest.createFunction(
     })
   })
 
+// function to delete sotry after 24 hour 
+const deleteStory=inngest.createFunction(
+  {id:"Delete Story After 24 Hours"},
+  {event:"app/story.delete"},
+  async({event,step})=>{
+    const {storyId}=event.data;
+    const in24hr=new Date(Date.now()+24*60*60*1000);
+    await step.sleepUntil('wait-for-24hr',in24hr);
+    await step.run("delete-story",async()=>{
+      await Story.findByIdAndDelete(storyId);
+      return {message:"Story deleted successfully"};
+    })
+  }
+  
+)
+
 
 export const functions = [
   SaveUserData,
   UpdateUserData,
   DeleteUserData,
-  sendConnectionRequestRemainder
+  sendConnectionRequestRemainder,
+  deleteStory
 ];

@@ -3,7 +3,8 @@ import User from "../Models/User.js";
 import imagekit from "../config/imagekit.js";
 import fs, { stat } from "fs";
 import Connection from "../Models/Connection.js";
-
+import Post from "../Models/Post.js";
+import { inngest } from "../inngest/index.js";
 
 // Get UserData from UserId
 export const getUserData=async(req,res)=>{
@@ -150,18 +151,18 @@ export const followUser=async(req,res)=>{
 
             const user=await User.findById(userId);
 
-            if(user.following.includes(id)){
-                return res.json({success:false, message:"Already Following"});
+            if(user.followings.includes(id)){
+                return res.json({success:false, message:"Already Followings"});
             }
             
-            user.following.push(id);
+            user.followings.push(id);
             await user.save();
 
             const toUser=await User.findById(id);
             toUser.followers.push(userId);
             await toUser.save();
 
-            return res.json({success:true, message:"Now Following"});
+            return res.json({success:true, message:"Now Followings"});
 
 
         } catch (error) {
@@ -178,11 +179,11 @@ export const unfollowUser=async(req,res)=>{
 
             const user=await User.findById(userId);
 
-            if(!user.following.includes(id)){
-                return res.json({success:false, message:"Not Following"});
+            if(!user.followings.includes(id)){
+                return res.json({success:false, message:"Not Followings"});
             }
 
-            user.following.pull(id);
+            user.followings.pull(id);
             await user.save();
 
             const toUser=await User.findById(id);
@@ -222,10 +223,16 @@ export const sendConnectionRequest=async(req,res)=>{
             }
         )
         if(!existingConnection){
-            await Connection.create({
+            const newConnection=await Connection.create({
                 from_user_id:userId,
                 to_user_id:id
             })
+
+            await inngest.send({
+                name:"app/connection-request",
+                data:{conectionId:newConnection._id}
+            })
+
             return res.json({success:true,message:"Connection Request Sent Successfully"});
         }else if(existingConnection && existingConnection.status==='accepted'){
             return res.json({success:false,message:"You are already connected"});
@@ -242,11 +249,11 @@ export const sendConnectionRequest=async(req,res)=>{
 export const getUserConnections=async(req,res)=>{
     try{
         const {userId}=await req.auth();
-        const user=await User.findById(userId).populate('connections followers following');
+        const user=await User.findById(userId).populate('connections followers followings');
 
         const connections=user.connections;
         const followers=user.followers;
-        const following=user.following;
+        const followings=user.followings;
 
         const requests = await Connection.find({
           to_user_id: userId,
@@ -255,7 +262,7 @@ export const getUserConnections=async(req,res)=>{
 
         const pendingConnections = requests.map(conn => conn.from_user_id); 
 
-        return res.json({success:true,connections,followers,following,pendingConnections});
+        return res.json({success:true,connections,followers,followings,pendingConnections});
     } catch (error) {
         console.log(error);
         return res.json({success:false, message:error.message});
@@ -291,5 +298,23 @@ export const acceptConnectionRequest=async(req,res)=>{
     } catch (error) {
         console.log(error);
         return res.json({success:false, message:error.message});
+    }
+}
+
+// Get User Profile
+export const getUserProfiles=async(req,res)=>{
+    try{
+        const {userId}=await req.auth();
+        const {profileId}=req.body;
+        const profile =await User.findById(profileId);
+        if(!profile){
+            return res.json({success:false,message:"User not found"});
+        }
+        const posts=await Post.find({user:profileId}).populate('user');
+        
+        res.json({success:true,profile,posts})
+
+    }catch(error){
+
     }
 }
