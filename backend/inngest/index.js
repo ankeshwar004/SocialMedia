@@ -3,6 +3,7 @@ import User from "../Models/User.js";
 import Connection from "../Models/Connection.js";
 import sendEmail from "../config/nodemailer.js";
 import Story from "../Models/Story.js";
+import Message from "../Models/Message.js";
 
 export const inngest = new Inngest({ id: "Social-Media" });
 
@@ -113,6 +114,35 @@ const deleteStory=inngest.createFunction(
     })
   }
   
+) 
+
+const sendNotificatioOfUnseenMessages=inngest.createFunction(
+  {id:"Send Notification of Unseen Messages"},
+  {cron:"TZ=Asia/Kolkata 0 9 * * *"}, //every day at 9am
+  async({step})=>{
+    const messages=await Message.find({seen:false}).populate('to_user_id');
+    const unseenCount={};
+
+    messages.forEach(msg => {
+     unseenCount[msg.to_user_id._id] =
+    (unseenCount[msg.to_user_id._id] || 0) + 1;
+    });
+
+    for(const userId in unseenCount){
+      const user=await User.findById(userId);
+      const subject="You have unseen messages";
+      const body=`<p>You have ${unseenCount[userId]} unseen messages</p>`;
+      await sendEmail({
+        to:user.email,
+        subject,
+        body
+      })
+    }
+
+    return {message:"Unseen message notifications sent."};
+    
+  }
+  
 )
 
 
@@ -121,5 +151,6 @@ export const functions = [
   UpdateUserData,
   DeleteUserData,
   sendConnectionRequestRemainder,
-  deleteStory
+  deleteStory,
+  sendNotificatioOfUnseenMessages
 ];
