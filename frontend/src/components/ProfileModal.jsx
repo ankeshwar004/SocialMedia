@@ -1,10 +1,17 @@
 import React, {useState, useEffect} from "react";
-import { dummyUserData } from "../assets/assets";
 import { Pencil } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { updateUser } from "../features/user/userSlice";
+import toast from "react-hot-toast";
+import { useAuth } from "@clerk/clerk-react";
+
 
 function ProfileModal({setShowEdit}) {
 
-    const user=dummyUserData;
+    const dispatch=useDispatch(); 
+    const { getToken } = useAuth();
+
+    const user=useSelector((state)=>state.user.value);
     const [editForm,setEditForm]=useState({
         full_name:user.full_name,
         username:user.username,
@@ -55,16 +62,32 @@ function ProfileModal({setShowEdit}) {
     }
 
     const handleSaveProfile=async(e)=>{
-        // Handle save profile logic here
         e.preventDefault();
+        try{
+            const userData=new FormData();
+            const {full_name,username,bio,location,profile_picture,cover_photo}=editForm;
+            userData.append('full_name',full_name);
+            userData.append('username',username);
+            userData.append('bio',bio);
+            userData.append('location',location);
+            profile_picture && userData.append('profile_picture',profile_picture);
+            cover_photo &&  userData.append('cover_photo',cover_photo);
+            const token=await getToken();
+            dispatch(updateUser({userData,token}))
+
+            setShowEdit(false);
+        }catch(error){
+            toast.error(error.message);
+        }
     }
 
     return(
         <div className="fixed inset-0 bg-black/50 h-screen overflow-y-scroll z-110">
-            <div className="max-w-2xl sm:py-6 mx-auto">
+            <div className="max-w-2 xl sm:py-6 mx-auto">
                 <div className="bg-white rounded-lg shadow-lg p-6">
                     <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
-                    <form action="" onSubmit={handleSaveProfile} className="space-y-4">
+                    <form action="" onSubmit={e=>toast.promise(handleSaveProfile(e),
+                    {loading:"Saving profile"})} className="space-y-4">
                         {/* Profile Picture */}
                         <div className="flex flex-col items-start gap-3">
                             <label htmlFor="profile_picture" className="block text-sm font-medium text-gray-700 mb-1">Profile Picture

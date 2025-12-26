@@ -1,6 +1,7 @@
 import { Calendar, MapPin, Verified } from "lucide-react";
 import React from "react";
 
+
 function UserProfileInfo({ user, posts,profileId,setShowEdit }) {
     return (
         <div className="relative py-4 px-6 md:px-8 bg-white">

@@ -3,18 +3,48 @@ import { useState,useEffect } from "react";
 import { dummyRecentMessagesData } from "../assets/assets";
 import { Link } from "react-router-dom";
 import moment from "moment";
+import { useAuth, useUser } from "@clerk/clerk-react";
+import toast from "react-hot-toast";
+import api from "../api/axios";
+
 
 function RecentMessages() {
 
     const [messages,setMessages]=useState([]);
-    
-    const fetchUserMessages=async()=>{
-        setMessages(dummyRecentMessagesData);
+    const {user}=useUser();
+    const {getToken}=useAuth();
+
+    const fetchRecentMessages=async()=>{
+        try{
+            const token= await getToken();
+            const {data}=await api.get('/api/user/recent-messages',{
+                headers:{Authorization:` Bearer ${token}`}
+            });
+            if(data.success){
+                const groupedMessages=data.messages.reduce((acc,msg)=>{
+                    const senderId= msg.from_user_id._id;
+                    if(!acc[senderId] || new Date(msg.createdAt) > new Date(acc[senderId].createdAt)){
+                        acc[senderId]=msg;
+                    }
+                    return acc;
+                }, {});
+
+                const sortMessages= Object.values(groupedMessages).sort((a,b)=>
+                    new Date(b.createdAt) - new Date(a.createdAt));
+                setMessages(sortMessages);
+            }
+        }catch(err){
+            toast.error(err.message);
+        }
     }
 
     useEffect(()=>{
-        fetchUserMessages();
-    },[]);
+        if(user){
+            fetchRecentMessages();
+            const intervalId = setInterval(fetchRecentMessages, 60000);
+            return ()=> {clearInterval(intervalId)};
+        }
+    },[user]);
 
     return(
         <div className="bg-white text-xs p-4 rounded-md max-w-xs p-4 mt-4 min-h-20 shadow

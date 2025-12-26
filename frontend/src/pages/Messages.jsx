@@ -1,10 +1,12 @@
 import React from "react";
-import { dummyConnectionsData } from "../assets/assets";
 import { Eye, MessageCircleIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 
 export default function Messages() {
-	
+
+	const {connections}=useSelector((state)=>state.connections);
 	const navigate=useNavigate();
 
 	return (
@@ -18,7 +20,7 @@ export default function Messages() {
 				{/* Chat List */}
 				<div className="flex flex-col gap-3">
 					{
-						dummyConnectionsData.map((user, index) => (
+						connections.map((user, index) => (
 							<div className="max-w-xl flex flex-warp items-center gap-5
 							 p-6 bg-white rounded-md shadow" key={user._id}>
 								<img src={user.profile_picture} alt="profile" 

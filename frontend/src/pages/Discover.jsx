@@ -1,25 +1,50 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
-import { dummyConnectionsData } from "../assets/assets";
 import UserCard from "../components/UserCard";
 import Loading from "../components/Loading";
+import api from "../api/axios";
+import { useAuth } from "@clerk/clerk-react";
+import toast from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { fetchUser } from "../features/user/userSlice";
+
 
 export default function Discover() {
 
+	const dispatch=useDispatch();
 	const [input,setInput]=useState("");
-	const [user,setUser]=useState(dummyConnectionsData);
+	const [user,setUser]=useState([]);
 	const [loading,setLoading]=useState(false);
+	const {getToken}=useAuth();	
 
-	const handleSearch=(e)=>{
+	const handleSearch= async (e)=>{
 		if(e.key==="Enter"){
-			setUser([]);
-			setLoading(true);
-			setTimeout(()=>{
-				setUser(dummyConnectionsData);
+			try{
+				setUser([])
+				setLoading(true);
+				const {data}= await api.post('/api/user/discover',{input},{
+					headers:{Authorization:` Bearer ${await getToken()}`}
+				});
+				if(data.success){
+					setUser(data.users);
+				}else{
+					toast.error(data.message);
+				} 
 				setLoading(false);
-			},1000);
+				setInput('');
+
+			}catch(error){
+				toast.error(error.message);
+			}
+			setLoading(false);
 		}
 	}
+
+	useEffect(()=>{
+		getToken().then(async(token)=>{
+			dispatch(fetchUser(token));
+		})
+	})
 
 	return (
 		<div className="m-h-screen bg-slate-50">

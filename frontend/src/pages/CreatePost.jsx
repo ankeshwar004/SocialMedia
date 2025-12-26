@@ -1,18 +1,50 @@
 import React ,{useState} from "react";
-import { dummyUserData } from "../assets/assets";
 import { Image, X } from "lucide-react";
-import tost from "react-hot-toast";
+import tost, { toast } from "react-hot-toast";
+import { useSelector } from "react-redux";
+import {useAuth} from '@clerk/clerk-react';
+import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
+
 
 export default function CreatePost() {
 
+	const navigate=useNavigate();
 	const [content,setContent]=useState("");
 	const [images,setImages]=useState([]);
 	const [loading,setLoading]=useState(false);
 
-	const user=dummyUserData;
+	const user=useSelector((state)=>state.user.value);
+	const {getToken}=useAuth();
 
 	const handleSubmit=async()=>{
-		// Handle post submission logic here
+		if(!images.length && !content.trim()){
+			return toast.error("Post cannot be empty");
+		}
+		setLoading(true);
+		const postType= images.length && content ? "text_with_image": images.length ? "image" : "text";
+
+		try{
+			const formData=new FormData();
+			formData.append('content',content); 
+			formData.append('post_type',postType); 
+			images.forEach((img)=>{
+				formData.append('images',img);
+			}); 
+			const {data}=await api.post('/api/post/add',formData,{
+				headers:{
+					'Authorization': `Bearer ${await getToken({template:"backend"})}`
+				}
+			});
+			if(data.success){
+				navigate('/');
+			}else{
+				toast.error(data.message);
+			}
+		}catch(error){
+			console.log(error);
+			toast.error("Error creating post");
+		}
 	}
 
 	return (

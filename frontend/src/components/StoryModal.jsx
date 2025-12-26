@@ -1,6 +1,9 @@
-import { ArrowBigLeft, Cpu, Sparkle, TextIcon, Upload } from "lucide-react";
+import { ArrowBigLeft,  Sparkle, TextIcon, Upload } from "lucide-react";
 import React,{useState,useEffect} from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@clerk/clerk-react";
+import api from "../api/axios";
+
 
 function StoryModal({setShowModal,fetchStories}){
     
@@ -10,18 +13,73 @@ function StoryModal({setShowModal,fetchStories}){
     const [text,setText]=useState("");
     const [media,setMedia]=useState(null);
     const [previewURL,setPreviewURL]=useState(null);
+    const {getToken}=useAuth();
+
+    const MAX_VIDEO_DURATION=45; // in seconds
+    const MAX_VIDEO_SIZE=30; // in MB
 
     const handleMediaUpload=(e)=>{
-        const file=e.target.files[0];
+        const file=e.target.files?.[0];
         if(file){
-            setMedia(file);
-            setPreviewURL(URL.createObjectURL(file));
+            if(file.type.startsWith("video")){
+                if(file.size > MAX_VIDEO_SIZE * 1024 * 1024){
+                    toast.error(`Video size should be less than ${MAX_VIDEO_SIZE} MB`);
+                    setMedia(null);
+                    setPreviewURL(null);
+                    return;
+                }
+                const video=document.createElement('video');
+                video.preload='metadata';
+                video.onloadedmetadata=()=>{
+                    window.URL.revokeObjectURL(video.src);
+                    if(video.duration > MAX_VIDEO_DURATION){
+                        toast.error(`Video duration should be less than ${MAX_VIDEO_DURATION} seconds`);
+                        setMedia(null);
+                        setPreviewURL(null);
+                        return;
+                    }else{
+                        setMedia(file);
+                        setPreviewURL(URL.createObjectURL(file));
+                        setText("");
+                        setMode("media");
+                    }
+                }
+                video.src=URL.createObjectURL(file);
+            }else if(file.type.startsWith("image")){
+                setMedia(file);
+                setPreviewURL(URL.createObjectURL(file));
+                setText("");
+                setMode("media");
+            }    
         }
     }
 
     const handleCreateStory=async()=>{
-        if(!text && !media){
-            throw new Error("Please add some text or media to create a story");
+        const media_type=mode==="media"? media?.type.startWith("image") ? "image" : "video" : null;
+        if(media_type==="text" && !text.trim()){
+            throw new Error("Story cannot be empty");
+        }
+
+        let formData=new FormData();
+        formData.append('content',text);
+        formData.append('media_type',media_type);
+        formData.append('media',media);
+        formData.append('background_color',bgColor);
+        const token=await getToken({template:"backend"});
+
+        try{
+            const {data}=await api.post('/api/story/create',formData,{
+                headers:{ Authorization: `Bearer ${token}` }
+            });
+            if(data.success){
+                toast.success(data.message);
+                setShowModal(false);
+                fetchStories();
+            }else{
+                toast.error(data.message);
+            }
+        }catch(error){
+            toast.error(error.message);
         }
     }
 
@@ -76,16 +134,14 @@ function StoryModal({setShowModal,fetchStories}){
                     </button>
                     <label className={`flex flex-1 items-center justify-center gap-2 p-2 cursor-pointer 
                     rounded ${mode==="media" ? "bg-white text-black" : "bg-zinc-800 "}`} >
-                        <input onChange={(e)=>{handleMediaUpload(e),setMode("media")}} 
+                        <input onChange={(e)=>{handleMediaUpload(e)}} 
                         type="file" accept="image/*,video/*" className="hidden"/> 
                         <Upload size={18}/>Photo/Videos
                     </label>
                 </div>
                 <button onClick={()=>toast.promise(handleCreateStory,{
                     loading: "Creating Story",
-                    success: "Story Created",
-                    error:e=> e.message || "Error in creating story"
-                })} className="flex items-center justify-center gap-2 text-white
+                    })} className="flex items-center justify-center gap-2 text-white
                 py-3 mt-4 w-full rounded bg-gradient-to-r from-indigo-500 to-purple-600
                 hover:from-indigo-600 hover:to-purple-700 active:scale-95
                 transition">

@@ -64,7 +64,11 @@ export const sendMessage=async(req,res)=>{
         const messageWithUserData=await Message.findById(message._id).populate('from_user_id').populate('to_user_id');
 
         if(connections[to_user_id]){
-            connections[to_user_id].write(`data: ${JSON.stringify(messageWithUserData)}\n\n`);
+            const sseMessage=`data: ${JSON.stringify(messageWithUserData)}\n\n`;
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/d8e79a4f-125f-4e88-ab68-736336c4bfa5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MessageController.js:67',message:'Sending message via SSE',data:{to_user_id,hasConnection:!!connections[to_user_id],messagePreview:sseMessage.substring(0,100),isJSON:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            connections[to_user_id].write(sseMessage);
         }
 
     }catch(err){

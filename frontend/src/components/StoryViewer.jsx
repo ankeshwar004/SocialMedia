@@ -1,6 +1,7 @@
 import { Badge, BadgeCheck,XCircle } from 'lucide-react';
 import React, {useState,useEffect} from 'react';
 
+
 function StoryViewer({ viewStory, setViewStory }) {
 
     const [Progress, setProgress] = useState(0);

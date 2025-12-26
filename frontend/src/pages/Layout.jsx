@@ -1,13 +1,19 @@
-import React,{useState} from "react";
+import React,{useState, useEffect} from "react";
 import Sidebar from "../components/sidebar";
 import { Outlet } from "react-router-dom";
-import { dummyUserData } from "../assets/assets";
 import Loading from "../components/Loading";
 import { Menu,X } from "lucide-react";
+import { useSelector } from "react-redux";
+
 
 function Layout(){
-    const user=dummyUserData;
+    const user=useSelector((state)=>state.user.value);
     const [sidebarOpen,setSidebarOpen]=useState(false);
+    // #region agent log
+    useEffect(()=>{
+        fetch('http://127.0.0.1:7242/ingest/d8e79a4f-125f-4e88-ab68-736336c4bfa5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Layout.jsx:12',message:'Layout render - user state',data:{hasUser:!!user,userType:typeof user,userKeys:user?Object.keys(user):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    },[user]);
+    // #endregion
     return user ? (
                 <div className="w-full h-full relative">
                         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

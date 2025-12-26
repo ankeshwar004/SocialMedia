@@ -1,24 +1,39 @@
-import { BadgeCheck, Heart, MessageCircle, Share } from "lucide-react";
+import { BadgeCheck, CarTaxiFront, Heart, MessageCircle, Share } from "lucide-react";
 import React ,{useState} from "react";
 import moment from "moment";
-import { dummyUserData } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
+import { useAuth } from "@clerk/clerk-react";
+import api from "../api/axios";
+
 
 function PostCard({ post }) {
 
     const navigate=useNavigate();
     const [likes, setLikes] = useState(post.likes_count);
-    const currUser=dummyUserData; 
+    const currUser=useSelector((state)=>state.user.value);
+    const {getToken}=useAuth();
     
     const handleLike=async()=>{
-        // Simulate API call to like/unlike the post
-        if(likes.includes(currUser.id)){
-            // Unlike the post
-            setLikes(likes.filter(id => id !== currUser.id));
+       try{
+        const {data}=await api.post('/api/post/like',{postId:post._id},{
+            headers:{   Authorization:` Bearer ${await getToken({template:"backend"})}` }});
+        if(data.success){
+            toast.success(data.message);
+            setLikes(prev=>{
+                if(prev.includes(currUser._id)){
+                    return prev.filter(id=>id!==currUser._id);
+                }else{
+                    return [...prev,currUser._id];
+                } 
+            })
         }else{
-            // Like the post
-            setLikes([...likes, currUser.id]);
+            toast(data.message);
         }
+       }catch(error){
+        console.log(error);
+         }
     }
 
 
