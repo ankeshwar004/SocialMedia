@@ -1,9 +1,9 @@
 import React ,{useState, useRef, useEffect, use} from "react";
 import { useParams } from "react-router-dom";
 import { dummyMessagesData, dummyUserData } from "../assets/assets";
-import { ImageIcon, SendHorizonal } from "lucide-react";
+import { ImageIcon, SendHorizonal, Check, CheckCheck } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useUser } from "@clerk/clerk-react";
 import { addMessages, fetchMessages, resetMessages } from "../features/messages/messagesSlice";
 import toast from "react-hot-toast";
 import api from "../api/axios";
@@ -16,9 +16,11 @@ export default function ChatBox() {
 	const {userId}=useParams();
 	const {getToken}=useAuth();
 	const dispatch=useDispatch();
+	const { user: currentUser } = useUser();
+	const currentUserId = currentUser?.id;
 
 	const [text,setText]=useState("");
-	const [image,setImage]=useState(null);
+	const [media,setMedia]=useState(null);
 	const [user,setUser]=useState(dummyUserData);
 	const messageEndRef = useRef(null);
 
@@ -35,19 +37,19 @@ export default function ChatBox() {
 
 	const sendMessage= async()=>{
 		try{
-			if(!text && !image) return;
+			if(!text && !media) return;
 			const token =await getToken();
 			const formData=new FormData();
 			formData.append('to_user_id',userId);
 			formData.append('text',text);
-			formData.append('image',image);
+			formData.append('media',media);
 
 			const {data}= await api.post('/api/message/send',formData,{
 				headers:{Authorization:` Bearer ${token}`}
 			});	
 			if(data.success){
 				setText('');
-				setImage(null)
+				setMedia(null)
 				dispatch(addMessages(data.message));
 			}else{
 				throw new Error(data.message);
@@ -90,19 +92,40 @@ export default function ChatBox() {
 				<div className="p-5 md:px-10 h-full overflow-y-scroll">
 					<div className="space-y-4 max-w-4xl mx-auto">
 						{
-							messages.toSorted((a,b)=>new Date(a.timestamp)-new Date(b.timestamp)).map((msg,index)=>(
-								<div key={index} className={`flex flex-col ${msg.to_user_id===user._id ? 'items-start' : 'items-end'}`}>
-									<div className={`p-2 text-sm rounded-lg max-w-sm bg-white text-slate-700 ${msg.to_user_id===user._id ? 'rounded-bl-none' : 'rounded-br-none'}`}>
+							messages.toSorted((a,b)=>new Date(a.createdAt)-new Date(b.createdAt)).map((msg,index)=>{
+								const isOutgoing = (String(msg.from_user_id)===String(currentUserId)) || (msg.from_user_id && String(msg.from_user_id._id)===String(currentUserId));
+								return (
+								<div key={index} className={`flex flex-col ${isOutgoing ? 'items-end' : 'items-start'}`}>
+									<div className={`p-2 text-sm rounded-lg max-w-sm bg-white text-slate-700 ${isOutgoing ? 'rounded-br-none' : 'rounded-bl-none'}`}>
 										{
 											msg.message_type==='image' && (
 												<img src={msg.media_url} alt="" className="w-full max-w-sm
 												 rounded-lg mb-1"/>
 											)
 										}
+										{
+											msg.message_type==='video' && (
+												<video src={msg.media_url} controls className="w-full max-w-sm rounded-lg mb-1" />
+											)
+										}
 										<p>{msg.text}</p>
 									</div>
+									{
+										// status ticks only for outgoing messages
+										isOutgoing && (
+											<div className="mt-1 text-xs text-gray-500 flex items-center gap-1">
+												{msg.seen ? (
+													<CheckCheck className="w-4 h-4 text-blue-500" />
+												) : msg.delivered ? (
+													<CheckCheck className="w-4 h-4" />
+												) : (
+													<Check className="w-4 h-4" />
+												)}
+											</div>
+										)
+									}
 								</div>
-							))
+							)})
 						}
 						<div ref={messageEndRef} />
 					</div>
@@ -111,13 +134,16 @@ export default function ChatBox() {
 					<div className="flex items-center gap-3 p-1.5 pl-5  bg-white w-full max-w-xl mx-auto border border-gray-300 rounded-full mb-5">
 						<input type="text" className="flex-1 outline-none text-slate-700" placeholder="Write a message..." 
 						onKeyDown={e=>e.key==='Enter' && sendMessage()} onChange={e=>setText(e.target.value)} value={text}/>
-						<label htmlFor="image">
+						<label htmlFor="media">
 							{
-								image? <img src={URL.createObjectURL(image)} onClick={(e) => {setImage(null);e.preventDefault()}}
-								 alt="image preview" className="w-8 h-8 rounded-full"/> :
+								media && media.type?.startsWith('image/') ? (
+									<img src={URL.createObjectURL(media)} onClick={(e) => {setMedia(null);e.preventDefault()}}
+									 alt="image preview" className="w-8 h-8 rounded-full"/>
+								) : (
 								<ImageIcon className="size-7 text-gray-500 cursor-pointer"/>
+								)
 							}
-							<input type="file" id="image" accept="image/*" hidden onChange={e=>setImage(e.target.files[0])} />
+							<input type="file" id="media" accept="image/*,video/*" hidden onChange={e=>setMedia(e.target.files[0])} />
 						</label>
 						<button onClick={sendMessage} className="bg-blue-500 text-white p-2 rounded-full
 						 hover:bg-blue-600 transition cursor-pointer">

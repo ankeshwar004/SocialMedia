@@ -15,7 +15,7 @@ import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { fetchUser } from "./features/user/userSlice";
 import { fetchConnections } from "./features/connections/connectionSlice";
-import { addMessages } from "./features/messages/messagesSlice";
+import { addMessages, updateMessageStatus } from "./features/messages/messagesSlice";
 
 
 function App() {
@@ -45,11 +45,22 @@ function App() {
     if(user){
       const eventSource=new EventSource(`${import.meta.env.VITE_BASEURL}/api/message/${user.id}`);
       eventSource.onmessage= async (event)=>{
-        const messageData= JSON.parse(event.data);
-        if(pathnameRef.current===`/messages/${messageData.from_user_id}`){
-          dispatch(addMessages(messageData));
+      let messageData;
+      try {
+        messageData = JSON.parse(event.data);
+      } catch {
+        // Ignore non-JSON events like 'log' or keep-alive
+        return;
+      }
+        if(messageData.type==="status"){
+          dispatch(updateMessageStatus(messageData.updates));
         }else{
-          // show notification
+          const msg = messageData.type === 'message' ? messageData : messageData;
+          if(pathnameRef.current===('/messages/'+msg.from_user_id._id)){
+            dispatch(addMessages(msg));
+          }else{
+            // show notification
+          }
         }
       }
       return ()=> {

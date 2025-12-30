@@ -23,10 +23,13 @@ export default function Discover() {
 				setUser([])
 				setLoading(true);
 				const {data}= await api.post('/api/user/discover',{input},{
-					headers:{Authorization:` Bearer ${await getToken()}`}
+					headers:{Authorization:`Bearer ${await getToken()}`}
 				});
 				if(data.success){
 					setUser(data.users);
+					if((data.users?.length || 0) === 0){
+						toast("No user found", { id: "discover-empty" });
+					}
 				}else{
 					toast.error(data.message);
 				} 

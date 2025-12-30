@@ -18,7 +18,7 @@ function UserCard({user}) {
     const handleFollow=async ()=>{
         try{
             const {data}=await api.post('/api/user/follow',{id:user._id},{
-                headers:{Authorization:``}
+                headers:{Authorization:`Bearer ${await getToken()}`}
             });
             if(data.success){
                 toast.success(data.message);
@@ -37,7 +37,7 @@ function UserCard({user}) {
         }
         try{
             const {data}=await api.post('/api/user/connect',{id:user._id},{
-                headers:{Authorization:``}
+                headers:{Authorization:`Bearer ${await getToken()}`}
             });
             if(data.success){
                 toast.success(data.message);
@@ -58,17 +58,17 @@ function UserCard({user}) {
                     <div className="flex gap-4">
                         <p className="flex gap-1 px-1 py-0.5 text-sm border-1 border-slate-400 rounded-md text-gray-600"><MapPin className="size-4" />{user.location}</p>
                         <p className="text-sm px-1 py-0.5 border-1 border-slate-400 rounded-md text-gray-600">{user.followers.length} follower</p>
-                        <p className="text-sm px-1 py-0.5 border-1 border-slate-400 rounded-md text-gray-600">{user.following.length} following</p>
+                        <p className="text-sm px-1 py-0.5 border-1 border-slate-400 rounded-md text-gray-600">{user.followings.length} followings</p>
 
                     </div>
                     
                     <div className="mt-2 flex gap-1">
                         {/* Follow Button */}
-                        <button onClick={handleFollow} disabled={currUser?.following.includes(user._id)} 
+                        <button onClick={handleFollow} disabled={currUser?.followings.includes(user._id)} 
                             className="flex justify-center items-center gap-2 w-full bg-indigo-600 text-white px-4 py-2 
                             rounded-md hover:bg-indigo-700 transition cursor-pointer">
                             <UserPlus className="size-4" />
-                            {currUser?.following.includes(user._id) ? 'Following' : 'Follow'}
+                            {currUser?.followings.includes(user._id) ? 'Following' : 'Follow'}
                         </button>
                         <button onClick={handleConnectionRequest} className="cursor-pointer flex items-center justify-center w-16 border text-slate-500 group
                          rounded-md active:scale-95 transition">

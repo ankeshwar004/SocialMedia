@@ -25,6 +25,15 @@ const messagesSlice = createSlice({
         addMessages:(state,action)=>{
             state.messages=[...state.messages, action.payload]; 
         },
+        updateMessageStatus:(state,action)=>{
+            const updates = Array.isArray(action.payload) ? action.payload : [action.payload];
+            updates.forEach(update=>{
+                const idx = state.messages.findIndex(m=>String(m._id)===String(update._id));
+                if(idx!==-1){
+                    state.messages[idx] = { ...state.messages[idx], ...update };
+                }
+            });
+        },
         resetMessages:(state)=>{
             state.messages=[];
         },
@@ -38,5 +47,5 @@ const messagesSlice = createSlice({
     }
 })
 
-export const {setMessages, addMessages, resetMessages}= messagesSlice.actions;
+export const {setMessages, addMessages, updateMessageStatus, resetMessages}= messagesSlice.actions;
 export default messagesSlice.reducer;

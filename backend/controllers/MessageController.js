@@ -21,8 +21,9 @@ export const sseConnection=async(req,res)=>{
     // Add the clients response object to connections object
     connections[userId]=res;
 
-    // Send an initial event to client
-    res.write("data: SSE connection established\n\n");
+    // Send an initial event to client (SSE formatted)
+    res.write('event: log\n');
+    res.write('data: Connected to SSE server\n\n');
 
     // Handle client disconnect
     req.on('close',()=>{
@@ -37,18 +38,18 @@ export const sendMessage=async(req,res)=>{
     try{
         const { userId } = req.auth();
         const { to_user_id,text } = req.body;
-        const image=req.file;
+        const media=req.file;
         let media_url="";
-        let message_type=image?'image':"text";
+        let message_type=media? (media.mimetype?.startsWith('video/') ? 'video' : 'image') : "text";
 
-        if(message_type!=="text"){
-            const fileBuffer=fs.readFileSync(image.path);
+        if(message_type!=="text" && media){
+            const fileBuffer=fs.readFileSync(media.path);
             const response=await imagekit.upload({
                file:fileBuffer,
-               fileName:image.originalname,
+               fileName:media.originalname,
             })
             media_url=response.url;
-        }   
+        }
         const message=await Message.create({
             from_user_id:userId,
             to_user_id,
@@ -64,11 +65,15 @@ export const sendMessage=async(req,res)=>{
         const messageWithUserData=await Message.findById(message._id).populate('from_user_id').populate('to_user_id');
 
         if(connections[to_user_id]){
-            const sseMessage=`data: ${JSON.stringify(messageWithUserData)}\n\n`;
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/d8e79a4f-125f-4e88-ab68-736336c4bfa5',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MessageController.js:67',message:'Sending message via SSE',data:{to_user_id,hasConnection:!!connections[to_user_id],messagePreview:sseMessage.substring(0,100),isJSON:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
+            const sseMessage=`data: ${JSON.stringify({ type: 'message', ...messageWithUserData.toObject() })}\n\n`;
             connections[to_user_id].write(sseMessage);
+
+            // mark as delivered and notify sender
+            await Message.findByIdAndUpdate(message._id,{ delivered:true });
+            if(connections[userId]){
+                const statusUpdate={ type:'status', updates:[{ _id: message._id, delivered:true }] };
+                connections[userId].write(`data: ${JSON.stringify(statusUpdate)}\n\n`);
+            }
         }
 
     }catch(err){
@@ -89,8 +94,18 @@ export const getChatMessages=async(req,res)=>{
                 {from_user_id:to_user_id,to_user_id:userId},
             ]
         }).sort({created_at:-1})
-        // mark messages as seen
-        await Message.updateMany({from_user_id:to_user_id,to_user_id:userId},{seen:true})
+        // mark messages as seen and notify sender via SSE
+        const unseen=await Message.find({from_user_id:to_user_id,to_user_id:userId,seen:false}).select('_id');
+        if(unseen.length>0){
+            await Message.updateMany({from_user_id:to_user_id,to_user_id:userId},{seen:true});
+            // Notify sender (the other user) that these messages are seen
+            const senderId=to_user_id;
+            if(connections[senderId]){
+                const updates=unseen.map(m=>({ _id: m._id, seen:true }));
+                const statusUpdate={ type:'status', updates };
+                connections[senderId].write(`data: ${JSON.stringify(statusUpdate)}\n\n`);
+            }
+        }
         res.json({ success:true,messages });
 
     }catch(err){

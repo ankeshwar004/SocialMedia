@@ -69,8 +69,8 @@ export const updateUserData=async(req,res)=>{
             full_name
         }
         
-        const profile=req.files.profile?.[0];
-        const cover=req.files.cover?.[0];
+        const profile=req.files?.profile_picture?.[0];
+        const cover=req.files?.cover_photo?.[0];
 
         if(profile){
             const buffer=fs.readFileSync(profile.path);
@@ -120,22 +120,27 @@ export const updateUserData=async(req,res)=>{
 export const discoverUsers=async(req,res)=>{
     try{
         const {userId}=await req.auth();
-        const {input}=await req.body;
-        
-        const allUsers=await User.find(
-            {
-                $or:[
-                    {username:new RegExp(input,'i')},
-                    {email:new RegExp(input,'i')},
-                    {full_name:new RegExp(input,'i')},
-                    {location:new RegExp(input,'i')},
-                ]
-            }
-        )
+        const {input} = req.body;
 
-        const filterUsers=allUsers.filter((user)=>user._id!==userId);
+        const term = String(input).trim();
+        if (!term) {
+            return res.json({ success: true, users: [], message: "No user found" });
+        }
 
-        return res.json({success:true, users:filterUsers,message:"Users fetched successfully"});
+        const regex = new RegExp(term, 'i');
+        const users = await User.find({
+            _id: { $ne: userId },
+            $or: [
+                { username: regex },
+                { full_name: regex },
+            ]
+        }).limit(50);
+
+        if (!users || users.length === 0) {
+            return res.json({ success: true, users: [], message: "No user found" });
+        }
+
+        return res.json({success:true, users, message:"Users fetched successfully"});
 
     } catch (error) {
         console.log(error);

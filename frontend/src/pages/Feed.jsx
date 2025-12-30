@@ -12,18 +12,18 @@ export default function Feed() {
 
 	const [feeds,setFeeds]=useState([]);
 	const [loading,setLoading]=useState(true);
-	const {getToken}=useAuth();
+	const {userId,getToken}=useAuth();
 
 	const fetchFeeds=async()=>{
 		try{
 			setLoading(true);
-			const {data}=await api.get('/api/post/feeds',{
+			const {data}=await api.get('/api/post/feed',{
 				headers:{
-					'Authorization': `Bearer ${await getToken({template:"backend"})}`
+					'Authorization':`Bearer ${await getToken({template:"backend"})}`
 				}
 			}) ; 
 			if(data.success){
-				setFeeds(data.feeds);
+				setFeeds(data.posts);
 			}else{
 				toast.error(data.message);
 			}
@@ -46,7 +46,8 @@ export default function Feed() {
 			<div>
             <StoriesBar/>
 			<div className="p-4 space-y-6">
-				{feeds.map((post)=>(
+				{feeds && feeds.map((post)=>(
+		            // post.user._id !== userId && 
 					<PostCard key={post._id} post={post}/>
 				))}
 			</div>

@@ -20,7 +20,7 @@ export default function Messages() {
 				{/* Chat List */}
 				<div className="flex flex-col gap-3">
 					{
-						connections.map((user, index) => (
+						connections.length!==0 ?connections.map((user, index) => (
 							<div className="max-w-xl flex flex-warp items-center gap-5
 							 p-6 bg-white rounded-md shadow" key={user._id}>
 								<img src={user.profile_picture} alt="profile" 
@@ -47,6 +47,22 @@ export default function Messages() {
 							</div>	
 						))
 
+						:
+						<div className="flex items-center justify-center">
+							<div className="max-w-xl w-full p-8 text-center bg-white rounded-md shadow">
+								<div className="mx-auto mb-3 size-12 flex items-center justify-center rounded-full bg-slate-100 text-slate-600">
+									<MessageCircleIcon className="size-6"/>
+								</div>
+								<h2 className="text-lg font-semibold text-slate-900">No connections yet</h2>
+								<p className="text-slate-600 mt-1">Connect with users to start messaging.</p>
+								<div className="mt-5 flex items-center justify-center">
+									<button onClick={() => navigate('/discover')} className='px-4 py-2 rounded bg-indigo-600 rounded-lg hover:bg-indigo-700
+									 text-white active:scale-95 transition-all duration-150'>
+										Discover Users
+									</button>
+								</div>
+							</div>
+						</div>
 					}
 
 				</div>

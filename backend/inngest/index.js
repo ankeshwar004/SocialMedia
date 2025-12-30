@@ -13,7 +13,7 @@ const SaveUserData = inngest.createFunction(
   { id: "Save User Data From Clerk" },
   { event: "clerk/user.created" },
   async (event) => {
-    const { id, first_name, last_name, email_addresses, image_url, username } = event.data;
+    let { id, first_name, last_name, email_addresses, image_url, username } = event.data;
     username = username || email_addresses[0].email_address.split('@')[0];
 
     const user = await User.findOne({ username });

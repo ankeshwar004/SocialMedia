@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
    email:{type: String, required: true, unique: true},
    username:{type: String, required: true, unique: true},
    bio:{type: String, default: ""},
+   location:{type: String, default: ""},
    profile_picture:{type: String, default: ""},
    cover_photo:{type: String, default: ""},
    followers:[{type: String, ref:'User'}],

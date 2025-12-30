@@ -24,7 +24,7 @@ export default function Profile() {
 		const token=await getToken();
 		try{
 			const {data}=await api.post('/api/user/profiles',{profileId},{
-				headers:{Authorization:` Bearer ${token}`}
+				headers:{Authorization:`Bearer ${token}`}
 			})
 			if(data.success){
 				setUser(data.profile);
@@ -43,17 +43,19 @@ export default function Profile() {
 	},[profileId,currUser]);
 
 
-	return user? (
+	const displayedUser = profileId ? user : (currUser || user);
+
+	return displayedUser ? (
 		<div className="relative h-full overflow-y-scroll bg-gray p-6">
 			<div className="max-w-3xl mx-auto">
 				{/* Profile Card */}
 				<div className="bg-white  rounded-md overflow-hidden">
 					{/* Cover Photo */}
 					<div className=" h-40 md:h-56 bg-gradient-to-r from-purple-500 to-indigo-600">
-						{user.cover_photo && <img src={user.cover_photo} alt="profile" className="size-full object-cover" />}
+						{displayedUser.cover_photo && <img src={displayedUser.cover_photo} alt="profile" className="size-full object-cover" />}
 					</div>
 					{/* Profile Info */}
-					<UserProfileInfo user={user} posts={posts} profileId={profileId} setShowEdit={setShowEdit} />  
+					<UserProfileInfo user={displayedUser} posts={posts} profileId={profileId} setShowEdit={setShowEdit} />  
 				</div>
 				{/* Tabs */}
 				<div className="mt-6 ">

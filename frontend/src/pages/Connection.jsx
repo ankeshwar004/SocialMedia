@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { User2, UserCheck2, UserPlus2, UserRoundCheck } from "lucide-react";
 import { useSelector,useDispatch } from "react-redux";
@@ -13,15 +13,16 @@ export default function Connection() {
 	const navigate=useNavigate();
 	const { getToken }=useAuth();
 	const dispatch=useDispatch();
-	const [currTab,setCurrTab]=React.useState("Followers");
+	const [currTab,setCurrTab]=useState("Followers");
 	const {connections,pendingConnections,followers,followings}=useSelector((state)=>state.connections);
 
 	const dataArray=[
 		{label:"Followers",value:followers,icon:User2},
 		{label:"Followings",value:followings,icon:UserCheck2},
-		{label:"Pending",value:pendingConnection,icon:UserRoundCheck},
-		{label:"Connections",value:connection,icon:UserPlus2}
+		{label:"Pending",value:pendingConnections,icon:UserRoundCheck},
+		{label:"Connections",value:connections,icon:UserPlus2}
 	];
+	// console.log("dataArray:", dataArray);
 
 	const handleUnfollow= async(userId)=>{
 		const token= await getToken();
@@ -31,7 +32,7 @@ export default function Connection() {
 			})	
 			if(data.success){
 				toast.success(data.message);
-				dispatch(fetchConnections({token}));
+				dispatch(fetchConnections(token));
 			}else{
 				toast.error(data.message);
 			}
@@ -47,7 +48,7 @@ export default function Connection() {
 			})	
 			if(data.success){
 				toast.success(data.message);
-				dispatch(fetchConnections({token}));
+				dispatch(fetchConnections(token));
 			}else{
 				toast.error(data.message);
 			}
@@ -77,7 +78,7 @@ export default function Connection() {
 
 	useEffect(()=>{
 		getToken().then((token)=>{
-			dispatch(fetchConnections({token}));
+			dispatch(fetchConnections(token));
 		})
 	},[])
 
@@ -99,7 +100,7 @@ export default function Connection() {
 								<item.icon className="h-6 w-6 text-gray-500 mr-2" />
 								<span className="font-semibold">{item.label}</span>
 							</div>
-							<span className="text-2xl font-bold">{item.value.length}</span>
+							<span className="text-2xl font-bold">{item.value?item.value.length:0}</span>
 						</div>
 					))}
 				</div>
@@ -132,7 +133,7 @@ export default function Connection() {
 									<img src={user.profile_picture} alt={user.full_name} className="size-12 rounded-full mr-4" />
 									<div>
 										<h3 className="text-m font-semibold">{user.full_name}</h3>
-										<p className="text-m text-gray-500">{user.bio.length<100?user.bio:user.bio.slice(0,100)+"...."}</p>
+										<p className="text-xs text-gray-500">{user.bio.length<100?user.bio:user.bio.slice(0,100)+"...."}</p>
 									</div>
 									<div>
 										{

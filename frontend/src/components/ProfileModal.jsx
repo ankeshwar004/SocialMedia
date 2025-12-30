@@ -11,15 +11,32 @@ function ProfileModal({setShowEdit}) {
     const dispatch=useDispatch(); 
     const { getToken } = useAuth();
 
-    const user=useSelector((state)=>state.user.value);
-    const [editForm,setEditForm]=useState({
-        full_name:user.full_name,
-        username:user.username,
-        bio:user.bio,
-        profile_picture:user.profile_picture,
-        location:user.location,
-        cover_photo:user.cover_photo
+    const user = useSelector((state) => state.user.value);
+    console.log("User in modal:", user);
+    const [editForm, setEditForm] = useState({
+        full_name: user?.full_name || "",
+        username: user?.username || "",
+        bio: user?.bio || "",
+        profile_picture: user?.profile_picture || "",
+        location: user?.location || "",
+        cover_photo: user?.cover_photo || "",
     });
+
+    // Sync form when user data loads/changes
+    useEffect(() => {
+        if (user) {
+            setEditForm({
+                full_name: user.full_name || "",
+                username: user.username || "",
+                bio: user.bio || "",
+                profile_picture: user.profile_picture || "",
+                location: user.location || "",
+                cover_photo: user.cover_photo || "",
+            });
+            setProfilePreview(user.profile_picture || "");
+            setCoverPreview(user.cover_photo || "");
+        }
+    }, [user]);
 
     // Local preview URL/state (string). We derive it from editForm.profile_picture
     const [profilePreview,setProfilePreview] = useState(user.profile_picture);
@@ -64,16 +81,16 @@ function ProfileModal({setShowEdit}) {
     const handleSaveProfile=async(e)=>{
         e.preventDefault();
         try{
-            const userData=new FormData();
+            const formData = new FormData();
             const {full_name,username,bio,location,profile_picture,cover_photo}=editForm;
-            userData.append('full_name',full_name);
-            userData.append('username',username);
-            userData.append('bio',bio);
-            userData.append('location',location);
-            profile_picture && userData.append('profile_picture',profile_picture);
-            cover_photo &&  userData.append('cover_photo',cover_photo);
+            formData.append('full_name',full_name);
+            formData.append('username',username);
+            formData.append('bio',bio);
+            formData.append('location',location);
+            profile_picture && formData.append('profile_picture',profile_picture);
+            cover_photo &&  formData.append('cover_photo',cover_photo);
             const token=await getToken();
-            dispatch(updateUser({userData,token}))
+            dispatch(updateUser({ formData, token }))
 
             setShowEdit(false);
         }catch(error){
@@ -82,8 +99,8 @@ function ProfileModal({setShowEdit}) {
     }
 
     return(
-        <div className="fixed inset-0 bg-black/50 h-screen overflow-y-scroll z-110">
-            <div className="max-w-2 xl sm:py-6 mx-auto">
+        <div className="fixed inset-0 bg-black/50 h-screen overflow-y-scroll z-[110]">
+            <div className="max-w-2xl sm:py-6 mx-auto">
                 <div className="bg-white rounded-lg shadow-lg p-6">
                     <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Profile</h1>
                     <form action="" onSubmit={e=>toast.promise(handleSaveProfile(e),
@@ -136,28 +153,28 @@ function ProfileModal({setShowEdit}) {
                             Name
                         </label>
                         <input type="text" className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Name"
-                        onChange={(e)=>setEditForm(prev => ({...editForm, full_name: e.target.value}))} value={editForm.full_name}/>
+                        onChange={(e)=>setEditForm(prev => ({...prev, full_name: e.target.value}))} value={editForm.full_name}/>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Username
                         </label>
                         <input type="text" className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Username"
-                        onChange={(e)=>setEditForm(prev => ({...editForm, username: e.target.value}))} value={editForm.username}/>
+                        onChange={(e)=>setEditForm(prev => ({...prev, username: e.target.value}))} value={editForm.username}/>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Bio
                         </label>
                         <textarea rows={3} className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Bio"
-                        onChange={(e)=>setEditForm(prev => ({...editForm, bio: e.target.value}))} value={editForm.bio}/>
+                        onChange={(e)=>setEditForm(prev => ({...prev, bio: e.target.value}))} value={editForm.bio}/>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Location
                         </label>
                         <input type="text" className="w-full p-3 border border-gray-300 rounded-lg" placeholder="Location"
-                        onChange={(e)=>setEditForm(prev => ({...editForm, location: e.target.value}))} value={editForm.location}/>
+                        onChange={(e)=>setEditForm(prev => ({...prev, location: e.target.value}))} value={editForm.location}/>
                     </div>
                     <div className="flex justify-end gap-3 mt-6">
                         <button onClick={()=>{setShowEdit(false)}} type="button" className="px-4 py-2 text-white  border-0 rounded-lg bg-gray-700 hover:cursor-pointer">

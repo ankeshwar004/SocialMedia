@@ -7,7 +7,7 @@ import { addUserStory, getUserStories } from '../controllers/storyController.js'
 
 const storyRouter=Router();
 
-storyRouter.post('/create',upload.single('image'),protect,addUserStory);
+storyRouter.post('/create',upload.single('media'),protect,addUserStory);
 storyRouter.get('/get',protect,getUserStories);
 
 export default storyRouter;

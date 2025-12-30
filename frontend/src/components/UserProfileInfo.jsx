@@ -1,8 +1,6 @@
 import { Calendar, MapPin, Verified } from "lucide-react";
-import React from "react";
 
-
-function UserProfileInfo({ user, posts,profileId,setShowEdit }) {
+function UserProfileInfo({ user, posts,profileId,setShowEdit}) {
     return (
         <div className="relative py-4 px-6 md:px-8 bg-white">
             <div className="flex flex-col md:flex-row items-center gap-6">
@@ -46,7 +44,7 @@ function UserProfileInfo({ user, posts,profileId,setShowEdit }) {
                             <span className="text-xs sm:text-sm ml-1.5 text-gray-500"> Followers</span>
                         </div>
                         <div>
-                            <span className="font-bold text-gray-900 sm:text-xl">{user.following.length}</span>
+                            <span className="font-bold text-gray-900 sm:text-xl">{user.followings.length}</span>
                             <span className="text-xs sm:text-sm ml-1.5 text-gray-500"> Following </span>
                         </div>
 

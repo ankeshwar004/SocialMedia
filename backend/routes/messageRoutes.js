@@ -9,7 +9,7 @@ import { sseConnection, sendMessage,getChatMessages,getUserRecentMessages } from
 const messageRouter=Router();
 
 messageRouter.get("/:userId",sseConnection);
-messageRouter.post("/send",upload.single('image'),protect,sendMessage);
+messageRouter.post("/send",upload.single('media'),protect,sendMessage);
 messageRouter.post("/get",protect,getChatMessages);
 
 export default messageRouter;

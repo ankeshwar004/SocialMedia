@@ -7,18 +7,15 @@ const initialState = {
     connections:[],
     pendingConnections:[],
     followers:[],
-    following:[]
+    followings:[]
 }
 
 export const fetchConnections= createAsyncThunk('connections/fetchConnections',async (token)=>{
-    async(token)=>{
         const {data}=await api.get('/api/user/connections',{
-            headers:{
-                'Authorization': `Bearer ${token}`
-            }
-        })
+            headers:{Authorization:`Bearer ${token}`}
+        });
+        console.log("Fetched connections data:", data);
         return data.success?data:null;
-    }
 });
 
 const connectionsSlice = createSlice({
@@ -33,7 +30,7 @@ const connectionsSlice = createSlice({
                 state.connections= action.payload.connections;
                 state.pendingConnections= action.payload.pendingConnections;
                 state.followers= action.payload.followers;
-                state.following= action.payload.following;
+                state.followings= action.payload.followings;
             }
         })
     }
