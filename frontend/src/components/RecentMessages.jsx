@@ -10,6 +10,7 @@ import api from "../api/axios";
 function RecentMessages() {
 
     const [messages, setMessages] = useState([]);
+    const [unSeenCount, setUnseenCount] = useState(0);
     const { user } = useUser();
     const { getToken } = useAuth();
 
@@ -19,8 +20,9 @@ function RecentMessages() {
             const { data } = await api.get('/api/user/recent-messages', {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            // console.log("Recent messages data:", data);
             if (data && data.success) {
-                const messagesArray = Array.isArray(data.messages) ? data.messages : [];
+                const messagesArray = data.message || [];
                 const groupedMessages = messagesArray.reduce((acc, msg) => {
                     const senderId = msg?.from_user_id?._id;
                     if (!senderId) return acc;
@@ -29,6 +31,7 @@ function RecentMessages() {
                     }
                     return acc;
                 }, {});
+                console.log("Grouped messages:", groupedMessages);
 
                 const sortMessages = Object.values(groupedMessages).sort((a, b) =>
                     new Date(b.createdAt) - new Date(a.createdAt));
@@ -72,7 +75,7 @@ function RecentMessages() {
 
                                 <div className="flex justify-between">
                                     <p className="text-gray-600 ">
-                                        {msg.text ? msg.text : (msg.message_type || "Message")}
+                                        {msg.text ? msg.text : msg.message_type }
                                     </p>
                                     {
                                         !msg.seen && (
